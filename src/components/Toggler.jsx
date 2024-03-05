@@ -1,9 +1,14 @@
 import { button } from 'leva'
 import React from 'react'
 
-const Toggler = () => {
+const Toggler = ({modeFunction}) => {
+
+  const handleTheMode = ()=> {
+    modeFunction()
+  }
+
   return (
-    <button>
+    <button onClick={()=>{handleTheMode()}}>
         click me
     </button>
   )
