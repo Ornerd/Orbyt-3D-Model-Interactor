@@ -157,36 +157,44 @@ const Sample = ({toggleAnimation, selectedPreset, handleSelectionModal, hasProce
     rotationSpeedZ: 0,
   };
 
-  const folder = pane.addFolder({ title: selectedPreset==="fan"? "fan": clickedName || 'any', expanded: true });
-  const bindings = [];
+  if(selectedPreset === "fan") {
 
-  ['X', 'Y', 'Z'].forEach((axis) => {
-    const propName = `rotationSpeed${axis}`;
-    const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
-      if (e.value === 0) {
-        referee.current.children.forEach((object) => {
-          if (object.isMesh) {
-            console.log("how many", originalRotation[object.name]);
-            // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
-            object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-            object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-          }
-          if (object.isGroup || object.isObject3D) {
-            object.children.forEach(object=> {
+    const folder = pane.addFolder({ title: selectedPreset==="fan"? "fan": clickedName || 'any', expanded: true });
+    const bindings = [];
+
+    
+    ['X', 'Y', 'Z'].forEach((axis) => {
+      const propName = `rotationSpeed${axis}`;
+      const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
+        if (e.value === 0) {
+          referee.current.children.forEach((object) => {
+            if (object.isMesh) {
+              console.log("how many", originalRotation[object.name]);
+              // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
               object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
               object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-            })
-            
-          }
-        });
-      }
-      setAnimationControls((prev) => ({
-        ...prev,
-        [clickedName]: { ...prev[clickedName], [`speed${axis}`]: e.value },
-      }));
+            }
+            if (object.isGroup || object.isObject3D) {
+              object.children.forEach(object=> {
+                object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
+                object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+              })
+              
+            }
+          });
+        }
+        setAnimationControls((prev) => ({
+          ...prev,
+          [clickedName]: { ...prev[clickedName], [`speed${axis}`]: e.value },
+        }));
+      });
+      bindings.push(binding);
     });
-    bindings.push(binding);
-  });
+  }
+
+ 
+
+ 
 
   setPanes((prevPanes) => ({
     ...prevPanes,
