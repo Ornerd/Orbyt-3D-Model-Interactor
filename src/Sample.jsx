@@ -9,7 +9,7 @@ import { Pane } from 'tweakpane';
 
 
 
-const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed}) => {
+const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed}) => {
   const {gl, camera, size, scene}= useThree();
   const rayCaster= new THREE.Raycaster();
   const referee =useRef()
@@ -24,18 +24,21 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
   const [originalPosition, setOriginalPosition] = useState([])
 
   const [animationControls, setAnimationControls] = useState([])
+  const [fanAnimControls, setFanAnimControls] = useState([])
   const [panes, setPanes] = useState({});
+  const [fanPanes, setFanPanes] = useState({});
   const [selectedObjectName, setSelectedObjectName] = useState(null);
+
+  const[state, setState] = useState([])
 
   const [handleBladeSelection, setHandleBladeSelection] = useState(false)
   const [bladeParent, setBladeParent] = useState([]) //to store all the fan blades for rotation
+  const [fanBladesArray, setFanBladesArray] = useState([])
 
  
   
- 
-
   
-  const handleClick = (e) => {
+  const handleClick = (e) => {  
 
     if (toggleAnimation && !handleBladeSelection) {
       e.stopPropagation();
@@ -57,7 +60,14 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
       updateIt(objectName);  
       setSelectedObjectName(objectName);
 
-      handleSelectionModal(e);
+      const existingBlade = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === objectName));
+
+      if (existingBlade === -1){ //used to check if clicked item isn;t part of any fan blade array
+        handleSelectionModal(e);
+      }else {
+        handlePresetChange() // sets preset to fan 
+      }
+      
     }else {
       return;
     }
@@ -116,29 +126,36 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
       
     });
 
-    console.log('originalRotations:', rotations);
     setOriginalPosition(positions);
     setOriginalRotation(rotations)
 
-    console.log("orr",originalRotation)
   },[])
  
 
  const handleSecondClick = (e)=> {
   if(toggleAnimation && handleBladeSelection) {
     let obj = e.object;
+    const existingBladeParentIndex = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === obj.name));
+    // console.log("here's",bladeParent)
+    // console.log("here's the parent",fanBladesArray)
+    // console.log("here's the index",existingBladeParentIndex)
+    // console.log("here's the object",obj)   
     if(selectedPreset=== "fan") {
-      setBladeParent((prevBlades=> {
-        if (prevBlades.includes(obj)) {
-          console.log("removed",prevBlades)
-          obj.material.emissive.set(0x000000)
-          return prevBlades.filter(blade => blade != obj)
-        }else {
-          console.log("added",prevBlades)
-          obj.material.emissive.set(0x0000ff)
-          return [...prevBlades, e.object]
-        }
-      }))
+      if (existingBladeParentIndex === -1){
+        setBladeParent((prevBlades=> {
+          if (prevBlades.includes(obj)) {
+            console.log("removed",prevBlades)
+            obj.material.emissive.set(0x000000)
+            return prevBlades.filter(blade => blade != obj)
+          }else {
+            console.log("added",prevBlades)
+            obj.material.emissive.set(0x0000ff)
+            return [...prevBlades, e.object]
+          }
+        }))
+      } else {
+        alert("item already selected as a fanblade");
+      }     
     }
     }
     
@@ -151,90 +168,133 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
       blade.material.emissive.set(0x000000)
       console.log('fired')
     })
+    setFanBladesArray(prevFans => [...prevFans, bladeParent])
+    setTimeout(()=> {
+      setBladeParent([])
+    }, 500)
     setHandleBladeSelection(false)
   }
  }, [confirmed])
 
 
+//  useEffect(()=>{
+//   console.log(fanBladesArray)
+//   console.log(bladeParent)
+//  })
+
   useEffect(() => {
 
   if (toggleAnimation && submittedPreset) {
    
+    const existingBladeIndex = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === clickedName));
 
     if(selectedPreset === "fan") {
 
-      const pane = new Pane();
+      fanBladesArray.forEach((bladesArray, index) => {
+        
+        const pane = new Pane();
 
-      const params = {
-        rotationSpeedX: 0,
-        rotationSpeedY: 0,
-        rotationSpeedZ: 0,
-      };
+        const params = {
+          rotateX: 0,
+          rotateY: 0,
+          rotateZ: 0,
+        };
 
-      const folder = pane.addFolder({ title: selectedPreset==="fan"? "fan": clickedName || 'any', expanded: true });
-      const bindings = [];
+        existingBladeIndex !== -1? index = existingBladeIndex : console.log(index)
 
-      
-      ['X', 'Y', 'Z'].forEach((axis) => {
-        const propName = `rotationSpeed${axis}`;
-        const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
-          if (e.value === 0) {
-            referee.current.children.forEach((object) => {
-              if (object.isMesh) {
-                console.log("how many", originalRotation[object.name]);
-                // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
-                object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-                object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-              }
-              if (object.isGroup || object.isObject3D) {
-                object.children.forEach(object=> {
+        const folder = pane.addFolder({ title: `fan ${index + 1}`, expanded: true });
+        const bindings = [];
+
+
+        ['X', 'Y', 'Z'].forEach((axis) => {
+          const propName = `rotate${axis}`;
+          const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
+            
+            if (e.last) {
+             const paneState = folder.exportState();
+              setState(prev => [...prev, paneState]) 
+              console.log(state)
+            }
+            if (e.value !== 0) {  // check to ensure that only one axis can be rotated at every given time for fan blades. 
+              ['X', 'Y', 'Z'].forEach((otherAxis) => {
+                if (otherAxis !== axis) {
+                  bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = true
+                }
+              });
+            } else {
+              ['X', 'Y', 'Z'].forEach((otherAxis) => {
+                bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = false;
+              });
+            }
+
+            if (e.value === 0) {
+              referee.current.children.forEach((object) => {
+                if (object.isMesh) {
+                  // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
                   object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
                   object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-                })
-                
-              }
-            });
-          }
-          setAnimationControls((prev) => ({
-            ...prev,
-            [clickedName]: { ...prev[clickedName], [`speed${axis}`]: e.value },
-          }));
+                }
+                if (object.isGroup || object.isObject3D) {
+                  object.children.forEach(object=> {
+                    object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
+                    object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+                  })
+                  
+                }
+              });
+            }
+            setFanAnimControls(prevControls => ({
+              ...prevControls,
+              [index]: { ...prevControls[index],[`speed${axis}`]: e.value},
+            }));
+          });
+          bindings.push(binding);
         });
-        bindings.push(binding);
-      });
 
-      setPanes((prevPanes) => ({
-        ...prevPanes,
-        [selectedObjectName]: pane,
-      }));
+        if(folder.title === `fan ${index + 1}`){
+          const currentState = state.filter(stat => stat.title === folder.title)
+          const latestState = currentState[currentState.length-1]
+          folder.importState(latestState)
+          console.log(currentState)
+          console.log(latestState)
+        }
 
-      return () => {
-        // bindings.forEach((binding) => binding.dispose());
-        pane.dispose();
-      };
+        setFanPanes((prevPanes) => ({
+          ...prevPanes,
+          [`fan${index}`]: pane,
+        }));
+  
+        return () => {
+          bindings.forEach((binding) => binding.dispose());
+          pane.dispose();
+        };
 
+      })
+      
     }
 
-    if (selectedPreset === "none") {
+    if (selectedPreset === "none" && existingBladeIndex === -1) {
 
       const pane = new Pane();
 
       const params = {
-        rotationSpeedX: 0,
-        rotationSpeedY: 0,
-        rotationSpeedZ: 0,
+        rotateX: 0,
+        rotateY: 0,
+        rotateZ: 0,
+        translateX: 0,
+        translateY: 0,
+        translateZ: 0,
       };
 
       const folder = pane.addFolder({ title: clickedName? clickedName : 'any', expanded: true });
       const bindings = [];
 
       ['X', 'Y', 'Z'].forEach((axis) => {
-        const propName = `rotationSpeed${axis}`;
+        const propName = `rotate${axis}`;
         const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
           if (e.value === 0) {
             referee.current.children.forEach((object) => {
               if (object.isMesh) {
-                console.log("how many", originalRotation[object.name]);
                 // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
                 object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
                 object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
@@ -250,7 +310,33 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
           }
           setAnimationControls((prev) => ({
             ...prev,
-            [clickedName]: { ...prev[clickedName], [`speed${axis}`]: e.value },
+            [clickedName]: { ...prev[clickedName], [`rotSpeed${axis}`]: e.value },
+          }));
+        });
+        bindings.push(binding);
+      });
+      ['X', 'Y', 'Z'].forEach((axis) => {
+        const propName = `translate${axis}`;
+        const binding = folder.addBinding(params, propName, { min: -10, max: 10, step: 0.01 }).on('change', (e) => {
+          if (e.value === 0) {
+            referee.current.children.forEach((object) => {
+              if (object.isMesh) {
+                // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
+                object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
+                object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+              }
+              if (object.isGroup || object.isObject3D) {
+                object.children.forEach(object=> {
+                  object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
+                  object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+                })
+                
+              }
+            });
+          }
+          setAnimationControls((prev) => ({
+            ...prev,
+            [clickedName]: { ...prev[clickedName], [`movSpeed${axis}`]: e.value },
           }));
         });
         bindings.push(binding);
@@ -267,25 +353,47 @@ const Sample = ({toggleAnimation, selectedPreset, submittedPreset, handleSelecti
       };
     }
 
- 
-
   }
-  }, [toggleAnimation, hasProceeded])
+  }, [toggleAnimation, clickedName, submittedPreset, fanBladesArray])
 
   useFrame(() => {
-    Object.entries(animationControls).forEach(([objectName, controls]) => {
-      
-      if (submittedPreset === "fan") {
-        ['X', 'Y', 'Z'].forEach((axis) => {
-          bladeParent.forEach(pikin => {
-              pikin.rotation[axis.toLowerCase()] += controls[`speed${axis}`] || 0;
-            })
+    // Object.entries(fanAnimControls).forEach(([index, controls])=> {
+    //   if (submittedPreset === "fan") {
+    //     ['X', 'Y', 'Z'].forEach((axis) => {
+    //       fanBladesArray.forEach(bladesArray => {
+    //         if (bladesArray.includes(clickedObject)) {
+    //           bladesArray.forEach(blade => {
+    //             blade.rotation[axis.toLowerCase()] += controls[`speed${axis}`] || 0;
+    //           })
+    //         }
+              
+    //         })
+    //       });
+    //   }
+    // })
+    
+    fanBladesArray.forEach((bladesArray, index) => {
+      // Access the animation controls for the current fan blades array
+      const controls = fanAnimControls[index];
+
+      if (controls) {
+          ['X', 'Y', 'Z'].forEach((axis) => {
+              bladesArray.forEach((blade) => {
+                blade.rotation[axis.toLowerCase()] += controls[`speed${axis}`] || 0;
+            });
+            // }
+              
           });
-      }else if(submittedPreset === "none") {
+      }
+    });
+
+    Object.entries(animationControls).forEach(([objectName, controls]) => {
+      if(submittedPreset === "none") {
         referee.current.traverse((child) => {
           if (child.name === objectName) {
             ['X', 'Y', 'Z'].forEach((axis) => {
-              child.rotation[axis.toLowerCase()] += controls[`speed${axis}`] || 0;
+              child.rotation[axis.toLowerCase()] += controls[`rotSpeed${axis}`] || 0;
+              child.position[axis.toLowerCase()] += controls[`movSpeed${axis}`] || 0;
             });
           }
         });

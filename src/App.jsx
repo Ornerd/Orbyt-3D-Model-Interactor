@@ -69,16 +69,15 @@ useEffect(()=> {
     }
   }
 
-  // useEffect(()=> {
-  //   setHasProceeded(false)
-  // }, [handleSelectionModal])
-
  
+  const handlePresetChange = ()=> {  // this ensures that when I click on an object already in the fan array, it sets itspreset to fa, enabling me to acces its accurate pane controls. i'm a bit makeshift with this. Would look for a better workaround later.
+    setSelectedPreset("fan")
+  }
+
   const handleProceedButton = ()=> {    
     if(selectedPreset) {
       setPresetPosition((...prev)=> ({...prev, active:false}))
-      // setSubmittedPreset(selectedPreset)
-
+      
       function updateSubmit(newSt) {
         setSubmittedPreset(prv=> {
           console.log("previous", prv)
@@ -162,6 +161,7 @@ useEffect(()=> {
          toggleAnimation = {toggleAnimation}
          selectedPreset = {selectedPreset}
          submittedPreset = {submittedPreset}
+         handlePresetChange={handlePresetChange}
          handleSelectionModal={handleSelectionModal}
          hasProceeded={hasProceeded}
          updateInfoText={updateInfoText}
