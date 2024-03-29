@@ -1,6 +1,6 @@
 import { OrbitControls, Plane } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Sample from './Sample'
 import { DoubleSide } from 'three'
 import Toggler from './components/Toggler'
@@ -21,6 +21,8 @@ const App = () => {
 
   const [hasProceeded, setHasProceeded] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+
+  const refd = useRef()
 
   const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
@@ -133,6 +135,7 @@ useEffect(()=> {
           handleProceedButton={handleProceedButton}
         />
       </section>
+      <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10' : 'hidden'}></section>
       
 
       <Canvas camera={{position:[-1, 10, 10]}}>
@@ -156,6 +159,7 @@ useEffect(()=> {
          hasProceeded={hasProceeded}
          updateInfoText={updateInfoText}
          confirmed={confirmed}
+         refd={refd}
         /> 
 
         <axesHelper scale={3}/>

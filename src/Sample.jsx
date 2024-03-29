@@ -9,7 +9,7 @@ import { Pane } from 'tweakpane';
 
 
 
-const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed}) => {
+const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd}) => {
   const {gl, camera, size, scene}= useThree();
   const rayCaster= new THREE.Raycaster();
   const referee =useRef()
@@ -22,6 +22,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
   const [originalRotation, setOriginalRotation] = useState([])
   const [originalPosition, setOriginalPosition] = useState([])
+  const [originalMaterial, setOriginalMaterial] = useState([])
 
   const [animationControls, setAnimationControls] = useState([])
   const [fanAnimControls, setFanAnimControls] = useState([])
@@ -39,7 +40,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   
   
   const handleClick = (e) => {  
-    console.log("parentile", referee)
+    console.log("parentile", e.object)
 
     if (toggleAnimation && !handleBladeSelection) {
       e.stopPropagation();
@@ -86,12 +87,19 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
               if (child.parent.name === referee.current.name) {
                 console.log("this blade is standalone")
                 setBladeParent(prevBlade=> [...prevBlade, child])
-                child.material.emissive.set(0x0000ff);
+                child.material = new THREE.MeshStandardMaterial({ color:0x0000ff, emissive:0x0000ff });
               }else if (child.parent.name !== referee.current.name) {
-                child.parent.children.forEach(child => {
+                if (child.parent.children.length > 1) {
+                  child.parent.children.forEach(child => {
+                    setBladeParent(prevBlade=> [...prevBlade, child])
+                    child.material = new THREE.MeshStandardMaterial({ color:0x0000ff, emissive:0x0000ff });
+                  })
+                } else {
+                  console.log("this blade is still standalone")
                   setBladeParent(prevBlade=> [...prevBlade, child])
-                  child.material.emissive.set(0x0000ff);
-                })
+                  child.material = new THREE.MeshStandardMaterial({ color:0x0000ff, emissive:0x0000ff });
+                }
+                
               }
               setHandleBladeSelection(true)
               updateInfoText();
@@ -110,12 +118,14 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   useEffect(()=> {  //saving the original rotations and positions for each mesh. This helps us keep things back in order after objects are displaced or moved from their original positions. For Example, if the user rotates his fan in a wrong axes, setting the value back to zero will in turn set the rotated blades to their default position, helping the user try another axes to get the correct rotation.
     const positions = {};
     const rotations = {};
+    const materials = {};
 
     const findMeshes = (object) => {
       if (object instanceof THREE.Mesh) {
         // If the object is a mesh, add it to the array
         positions[object.name] = {x:object.position.x, y:object.position.y, z:object.position.z};
         rotations[object.name] = {x:object.rotation.x, y:object.rotation.y, z:object.rotation.z};
+        materials[object.name] = object.material
       } else if (object.children && object.children.length > 0) {
         // If the object has children, recursively call this function for each child
         object.children.forEach(child => findMeshes(child));
@@ -126,7 +136,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
       findMeshes(referee.current);
     }
 
-    console.log(originalRotation)
+    setOriginalMaterial(materials);
     setOriginalPosition(positions);
     setOriginalRotation(rotations)
 
@@ -143,11 +153,14 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
         setBladeParent((prevBlades=> {
           if (prevBlades.includes(obj)) {
             console.log("removed",prevBlades)
-            obj.material.emissive.set(0x000000)
+            // obj.material.color.set( 0xffffff )
+            obj.material = originalMaterial[obj.name]
+            // obj.material = new THREE.MeshStandardMaterial({ color:'transparent' });
             return prevBlades.filter(blade => blade != obj)
           }else {
             console.log("added",prevBlades)
-            obj.material.emissive.set(0x0000ff)
+            // obj.material.color.set( 0xff0000 )
+            obj.material = new THREE.MeshStandardMaterial({ color:0x0000ff, emissive:0x0000ff });
             return [...prevBlades, e.object]
           }
         }))
@@ -163,7 +176,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
  useEffect(()=>{  //check to reset the emissiveness and add the fan blades to the array of arrays
   if(confirmed) {
     bladeParent.forEach(blade => {
-      blade.material.emissive.set(0x000000)
+      blade.material = originalMaterial[blade.name]
       console.log('fired')
     })
     setFanBladesArray(prevFans => [...prevFans, bladeParent])
@@ -177,7 +190,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
  useEffect(()=>{  //check to ensure the emit and selection property is disabled when the animation mode is deselected
   if(!toggleAnimation) {
     bladeParent.forEach(blade => {
-      blade.material.emissive.set(0x000000)
+      blade.material = originalMaterial[blade.name]
       console.log('fired')
     })
     setTimeout(()=> {
@@ -188,8 +201,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
  }, [toggleAnimation])
 
 
-/
-
   useEffect(() => {
 
   if (toggleAnimation && submittedPreset) {
@@ -197,81 +208,82 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     const existingBladeIndex = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === clickedName));
 
     if(selectedPreset === "fan") {
-
+      console.log(fanBladesArray[fanBladesArray.length-1]) 
+      
       fanBladesArray.forEach((bladesArray, index) => {
         
-        const pane = new Pane();
-
-        const params = {
-          rotateX: 0,
-          rotateY: 0,
-          rotateZ: 0,
-        };
-
-        existingBladeIndex !== -1? index = existingBladeIndex : console.log(index)
-
-        const folder = pane.addFolder({ title: `fan ${index + 1}`, expanded: true });
-        const bindings = [];
-
-
-        ['X', 'Y', 'Z'].forEach((axis) => {
-          const propName = `rotate${axis}`;
-          const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
-            
-            if (e.last) {
-             const paneState = folder.exportState();
-              setState(prev => [...prev, paneState]) 
-            }
-            if (e.value !== 0) {  // check to ensure that only one axis can be rotated at every given time for fan blades. 
-              ['X', 'Y', 'Z'].forEach((otherAxis) => {
-                if (otherAxis !== axis) {
-                  bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = true;
-                  bindings.find(b => b.label === `rotate${otherAxis}`).value = 0;
-                  bindings.find(b => b.label === `rotate${otherAxis}`).controller.value.rawValue = 0
-                }
-              });
-            } else {
-              ['X', 'Y', 'Z'].forEach((otherAxis) => {
-                bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = false;
-                
-              });
-            }
-
-            if (e.value === 0) {
-              const restoreInits = (object) => {
-                if (object instanceof THREE.Mesh) {
-                  // If the object is a mesh, add it to the array
-                  object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-                  object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-                } else if (object.children && object.children.length > 0) {
-                  // If the object has children, recursively call this function for each child
-                  object.children.forEach(child => restoreInits(child));
-                }
-              };
-          
-              if (referee.current) {
-                restoreInits(referee.current);
+        const pane = new Pane({
+          container: refd.current
+        }); 
+            const params = {
+              rotateX: 0,
+              rotateY: 0,
+              rotateZ: 0,
+            };
+  
+            existingBladeIndex !== -1? index = existingBladeIndex : console.log(index)
+  
+            const folder = pane.addFolder({ title: `fan ${index + 1}`, expanded: true });
+            const bindings = [];
+  
+             ['X', 'Y', 'Z'].forEach((axis) => {
+            const propName = `rotate${axis}`;
+            const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
+              
+              if (e.last) {
+               const paneState = folder.exportState();
+                setState(prev => [...prev, paneState]) 
               }
-            }
-            setFanAnimControls(prevControls => ({
-              ...prevControls,
-              [index]: { ...prevControls[index],[`speed${axis}`]: e.value},
-            }));
+              if (e.value !== 0) {  // check to ensure that only one axis can be rotated at every given time for fan blades. 
+                ['X', 'Y', 'Z'].forEach((otherAxis) => {
+                  if (otherAxis !== axis) {
+                    bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = true;
+                    bindings.find(b => b.label === `rotate${otherAxis}`).value = 0;
+                    bindings.find(b => b.label === `rotate${otherAxis}`).controller.value.rawValue = 0
+                  }
+                });
+              } else {
+                ['X', 'Y', 'Z'].forEach((otherAxis) => {
+                  bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = false;
+                  
+                });
+              }
+  
+              if (e.value === 0) {
+                const restoreInits = (object) => {
+                  if (object instanceof THREE.Mesh) {
+                    object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
+                    object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+                  } else if (object.children && object.children.length > 0) {
+                    // If the object has children, recursively call this function for each child
+                    object.children.forEach(child => restoreInits(child));
+                  }
+                };
+            
+                if (referee.current) {
+                  restoreInits(referee.current);
+                }
+              }
+              setFanAnimControls(prevControls => ({
+                ...prevControls,
+                [index]: { ...prevControls[index],[`speed${axis}`]: e.value},
+              }));
+            });
+        
+            bindings.push(binding);
           });
-      
-          bindings.push(binding);
-        });
-
-        if(folder.title === `fan ${index + 1}`){
-          const currentState = state.filter(stat => stat.title === folder.title)
-          const latestState = currentState[currentState.length-1]
-          folder.importState(latestState)
-        }
-
-        setFanPanes((prevPanes) => ({
-          ...prevPanes,
-          [`fan${index}`]: pane,
-        }));
+  
+          if(folder.title === `fan ${index + 1}`){
+            const currentState = state.filter(stat => stat.title === folder.title)
+            const latestState = currentState[currentState.length-1]
+            folder.importState(latestState)
+          }
+  
+          setFanPanes((prevPanes) => ({
+            ...prevPanes,
+            [`fan${index}`]: pane,
+          }));
+          
   
         return () => {
           bindings.forEach((binding) => binding.dispose());
@@ -284,7 +296,9 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
     if (selectedPreset === "none" && existingBladeIndex === -1) {
 
-      const pane = new Pane();
+      const pane = new Pane({
+        container: refd.current
+      });
 
       const params = {
         rotateX: 0,
@@ -363,7 +377,22 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     }
 
   }
+
   }, [toggleAnimation, clickedName, submittedPreset, fanBladesArray])
+
+
+
+  useEffect(()=> {  //check to ensure only the last selected pane control is visible at any given time.
+    if (refd.current.children.length > 1) {
+      const lastChildIndex = refd.current.children.length-1
+
+      for (let i = 0; i < lastChildIndex; i++) {
+        refd.current.removeChild(refd.current.children[0]);
+      }
+    }
+    
+  })
+
 
   useFrame(() => {   
     fanBladesArray.forEach((bladesArray, index) => {
