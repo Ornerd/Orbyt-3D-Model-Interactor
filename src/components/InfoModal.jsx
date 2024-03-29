@@ -9,7 +9,7 @@ const InfoModal = ({infoText, openFunction, toggleAnimation, hasProceeded}) => {
 
 
   return (
-    <div>
+    <div /*className='bg-[#1c4587]'*/ >
       <h3>{infoText}</h3>
       <button className={toggleAnimation && hasProceeded? "block": "hidden"} onClick={()=> {handleFunction()}}>
         Confirm Selection

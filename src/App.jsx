@@ -8,17 +8,6 @@ import InfoModal from './components/InfoModal'
 import AnimPresets from './components/AnimPresets'
 
 
-// let array = [ 1, 2, 3, 4, 5, 6 ]; 
-// for (let index = 2; index < array.length; index++) { 
-//     console.log(array[index]); 
-// }
-// for (let traverse of array ){
-//   console.log(traverse)
-// }
-
-// const actions = ()=> {
-//   onpointerdown
-// }
 
 
 const App = () => {
@@ -26,14 +15,14 @@ const App = () => {
   const [toggleAnimation, setToggleAnimation] = useState(false)
   const [infoText, setInfoText] =  useState([])
 
-  const[selectedPreset, setSelectedPreset] = useState(null)
-  const[presetPosition, setPresetPosition] = useState( {active: false, x: 0, y: 0})
+  const [selectedPreset, setSelectedPreset] = useState(null)
+  const [presetPosition, setPresetPosition] = useState( {active: false, x: 0, y: 0})
   const [submittedPreset, setSubmittedPreset] = useState(null)
 
-  const[hasProceeded, setHasProceeded] = useState(false)
-  const[confirmed, setConfirmed] = useState(false)
+  const [hasProceeded, setHasProceeded] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
 
-  const animationHandler = ()=> {
+  const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
 
    
@@ -121,33 +110,34 @@ useEffect(()=> {
   }, [confirmed])
 
 
-  // hasProceeded? setPresetPosition((...prev)=> ({...prev, active:false})) : setPresetPosition((...prev)=> ({...prev, active:true}))
 
   return (
     <div className='w-full h-screen'>
-      Apparation
-      <h1 className="text-3xl font-bold underline text-red-500">
-        Animations with Three JS
-      </h1>
-      <Toggler modeFunction={animationHandler}/>
-      <InfoModal 
-        infoText={infoText}
-        openFunction={confirmSelectionFunction}
-        toggleAnimation={toggleAnimation}
-        hasProceeded={hasProceeded}
-      />
-        
-     
-      <AnimPresets 
-        selectedPreset={selectedPreset} 
-        handleAnimationPresets={handleAnimationPresetOptions}
-        presetPosition={presetPosition}
-        handleProceedButton={handleProceedButton}
-      />
+      <section className='absolute z-10 w-2/5'>
+        <h1 className="text-3xl font-bold underline text-red-500">
+          Animations with Three JS
+        </h1>
+        <Toggler modeFunction={animationHandler}/>
+        <InfoModal 
+          infoText={infoText}
+          openFunction={confirmSelectionFunction}
+          toggleAnimation={toggleAnimation}
+          hasProceeded={hasProceeded}
+        />
+          
+      
+        <AnimPresets 
+          selectedPreset={selectedPreset} 
+          handleAnimationPresets={handleAnimationPresetOptions}
+          presetPosition={presetPosition}
+          handleProceedButton={handleProceedButton}
+        />
+      </section>
+      
 
-      <Canvas camera={{position:[-1, 4, 10]}}>
+      <Canvas camera={{position:[-1, 10, 10]}}>
         <ambientLight intensity={0.4} />
-        <directionalLight color="#1c1db4" position={[0, 5, 5]} />
+        <directionalLight color="#ffffff" position={[0, 5, 5]} />
         <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
           <boxGeometry />
           <meshPhongMaterial />

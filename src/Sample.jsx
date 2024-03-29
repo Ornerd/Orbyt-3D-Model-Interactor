@@ -29,7 +29,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   const [fanPanes, setFanPanes] = useState({});
   const [selectedObjectName, setSelectedObjectName] = useState(null);
 
-  const[state, setState] = useState([])
+  const[state, setState] = useState([])  //should be properly renamed paneState. Helps save our controls, especially those of the presets. 
 
   const [handleBladeSelection, setHandleBladeSelection] = useState(false)
   const [bladeParent, setBladeParent] = useState([]) //to store all the fan blades for rotation
@@ -39,6 +39,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   
   
   const handleClick = (e) => {  
+    console.log("parentile", referee)
 
     if (toggleAnimation && !handleBladeSelection) {
       e.stopPropagation();
@@ -62,10 +63,10 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
       const existingBlade = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === objectName));
 
-      if (existingBlade === -1){ //used to check if clicked item isn;t part of any fan blade array
+      if (existingBlade === -1){ //used to check if clicked item isn't part of any fan blade array
         handleSelectionModal(e);
       }else {
-        handlePresetChange() // sets preset to fan 
+        handlePresetChange() // sets preset to fan so that other functions that depend on the fan preset can work
       }
       
     }else {
@@ -74,7 +75,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     
   }
 
-  useEffect(()=> {
+  useEffect(()=> {  //leads us the the handleSecondClick function. For fan blades, it helps automatically select all the child elements assumed to be blades, which can be later deselected based off the user's discretion.
     const handleItemSelection = ()=> {
       if(hasProceeded){
         if (selectedPreset === "fan") {
@@ -87,7 +88,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
                 setBladeParent(prevBlade=> [...prevBlade, child])
                 child.material.emissive.set(0x0000ff);
               }else if (child.parent.name !== referee.current.name) {
-                // const bladparenT =child.parent;
                 child.parent.children.forEach(child => {
                   setBladeParent(prevBlade=> [...prevBlade, child])
                   child.material.emissive.set(0x0000ff);
@@ -107,39 +107,37 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   },[hasProceeded])
   
 
-  useEffect(()=> {
+  useEffect(()=> {  //saving the original rotations and positions for each mesh. This helps us keep things back in order after objects are displaced or moved from their original positions. For Example, if the user rotates his fan in a wrong axes, setting the value back to zero will in turn set the rotated blades to their default position, helping the user try another axes to get the correct rotation.
     const positions = {};
     const rotations = {};
 
-    referee.current.children.forEach(object => {
-      if (object.isMesh) {
+    const findMeshes = (object) => {
+      if (object instanceof THREE.Mesh) {
+        // If the object is a mesh, add it to the array
         positions[object.name] = {x:object.position.x, y:object.position.y, z:object.position.z};
         rotations[object.name] = {x:object.rotation.x, y:object.rotation.y, z:object.rotation.z};
+      } else if (object.children && object.children.length > 0) {
+        // If the object has children, recursively call this function for each child
+        object.children.forEach(child => findMeshes(child));
       }
+    };
 
-      if (object.isGroup || object.isObject3D) {
-        object.children.forEach(obj => {
-          positions[obj.name] = {x:obj.position.x, y:obj.position.y, z:obj.position.z};
-          rotations[obj.name] = {x:obj.rotation.x, y:obj.rotation.y, z:obj.rotation.z};
-        })
-      }
-      
-    });
+    if (referee.current) {
+      findMeshes(referee.current);
+    }
 
+    console.log(originalRotation)
     setOriginalPosition(positions);
     setOriginalRotation(rotations)
 
-  },[])
+  },[referee.current])
  
 
- const handleSecondClick = (e)=> {
+ const handleSecondClick = (e)=> {  //here is where you can add or remove blades from the fan arrays. Other presets where you'd need to add or remove objects can and will also be added here.
   if(toggleAnimation && handleBladeSelection) {
     let obj = e.object;
     const existingBladeParentIndex = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === obj.name));
-    // console.log("here's",bladeParent)
-    // console.log("here's the parent",fanBladesArray)
-    // console.log("here's the index",existingBladeParentIndex)
-    // console.log("here's the object",obj)   
+   
     if(selectedPreset=== "fan") {
       if (existingBladeParentIndex === -1){
         setBladeParent((prevBlades=> {
@@ -162,7 +160,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
  }
   
 
- useEffect(()=>{
+ useEffect(()=>{  //check to reset the emissiveness and add the fan blades to the array of arrays
   if(confirmed) {
     bladeParent.forEach(blade => {
       blade.material.emissive.set(0x000000)
@@ -176,11 +174,21 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   }
  }, [confirmed])
 
+ useEffect(()=>{  //check to ensure the emit and selection property is disabled when the animation mode is deselected
+  if(!toggleAnimation) {
+    bladeParent.forEach(blade => {
+      blade.material.emissive.set(0x000000)
+      console.log('fired')
+    })
+    setTimeout(()=> {
+      setBladeParent([])
+    }, 500)
+    setHandleBladeSelection(false)
+  }
+ }, [toggleAnimation])
 
-//  useEffect(()=>{
-//   console.log(fanBladesArray)
-//   console.log(bladeParent)
-//  })
+
+/
 
   useEffect(() => {
 
@@ -213,41 +221,44 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
             if (e.last) {
              const paneState = folder.exportState();
               setState(prev => [...prev, paneState]) 
-              console.log(state)
             }
             if (e.value !== 0) {  // check to ensure that only one axis can be rotated at every given time for fan blades. 
               ['X', 'Y', 'Z'].forEach((otherAxis) => {
                 if (otherAxis !== axis) {
-                  bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = true
+                  bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = true;
+                  bindings.find(b => b.label === `rotate${otherAxis}`).value = 0;
+                  bindings.find(b => b.label === `rotate${otherAxis}`).controller.value.rawValue = 0
                 }
               });
             } else {
               ['X', 'Y', 'Z'].forEach((otherAxis) => {
                 bindings.find(b=> b.label === `rotate${otherAxis}`).disabled = false;
+                
               });
             }
 
             if (e.value === 0) {
-              referee.current.children.forEach((object) => {
-                if (object.isMesh) {
-                  // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
+              const restoreInits = (object) => {
+                if (object instanceof THREE.Mesh) {
+                  // If the object is a mesh, add it to the array
                   object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
                   object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+                } else if (object.children && object.children.length > 0) {
+                  // If the object has children, recursively call this function for each child
+                  object.children.forEach(child => restoreInits(child));
                 }
-                if (object.isGroup || object.isObject3D) {
-                  object.children.forEach(object=> {
-                    object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-                    object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-                  })
-                  
-                }
-              });
+              };
+          
+              if (referee.current) {
+                restoreInits(referee.current);
+              }
             }
             setFanAnimControls(prevControls => ({
               ...prevControls,
               [index]: { ...prevControls[index],[`speed${axis}`]: e.value},
             }));
           });
+      
           bindings.push(binding);
         });
 
@@ -255,8 +266,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
           const currentState = state.filter(stat => stat.title === folder.title)
           const latestState = currentState[currentState.length-1]
           folder.importState(latestState)
-          console.log(currentState)
-          console.log(latestState)
         }
 
         setFanPanes((prevPanes) => ({
@@ -293,20 +302,20 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
         const propName = `rotate${axis}`;
         const binding = folder.addBinding(params, propName, { min: 0, max: 0.3, step: 0.01 }).on('change', (e) => {
           if (e.value === 0) {
-            referee.current.children.forEach((object) => {
-              if (object.isMesh) {
-                // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
+            const restoreInits = (object) => {
+              if (object instanceof THREE.Mesh) {
+                // If the object is a mesh, add it to the array
                 object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
                 object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+              } else if (object.children && object.children.length > 0) {
+                // If the object has children, recursively call this function for each child
+                object.children.forEach(child => restoreInits(child));
               }
-              if (object.isGroup || object.isObject3D) {
-                object.children.forEach(object=> {
-                  object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-                  object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-                })
-                
-              }
-            });
+            };
+        
+            if (referee.current) {
+              restoreInits(referee.current);
+            }
           }
           setAnimationControls((prev) => ({
             ...prev,
@@ -319,20 +328,20 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
         const propName = `translate${axis}`;
         const binding = folder.addBinding(params, propName, { min: -10, max: 10, step: 0.01 }).on('change', (e) => {
           if (e.value === 0) {
-            referee.current.children.forEach((object) => {
-              if (object.isMesh) {
-                // object.rotation[axis.toLowerCase()] = originalRotation[object.name];
+            const restoreInits = (object) => {
+              if (object instanceof THREE.Mesh) {
+                // If the object is a mesh, add it to the array
                 object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
                 object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
+              } else if (object.children && object.children.length > 0) {
+                // If the object has children, recursively call this function for each child
+                object.children.forEach(child => restoreInits(child));
               }
-              if (object.isGroup || object.isObject3D) {
-                object.children.forEach(object=> {
-                  object.position.set(originalPosition[object.name].x, originalPosition[object.name].y, originalPosition[object.name].z);
-                  object.rotation.set(originalRotation[object.name].x, originalRotation[object.name].y, originalRotation[object.name].z);
-                })
-                
-              }
-            });
+            };
+        
+            if (referee.current) {
+              restoreInits(referee.current);
+            }
           }
           setAnimationControls((prev) => ({
             ...prev,
@@ -348,7 +357,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
       }));
 
       return () => {
-        // bindings.forEach((binding) => binding.dispose());
+        bindings.forEach((binding) => binding.dispose());
         pane.dispose();
       };
     }
@@ -356,22 +365,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   }
   }, [toggleAnimation, clickedName, submittedPreset, fanBladesArray])
 
-  useFrame(() => {
-    // Object.entries(fanAnimControls).forEach(([index, controls])=> {
-    //   if (submittedPreset === "fan") {
-    //     ['X', 'Y', 'Z'].forEach((axis) => {
-    //       fanBladesArray.forEach(bladesArray => {
-    //         if (bladesArray.includes(clickedObject)) {
-    //           bladesArray.forEach(blade => {
-    //             blade.rotation[axis.toLowerCase()] += controls[`speed${axis}`] || 0;
-    //           })
-    //         }
-              
-    //         })
-    //       });
-    //   }
-    // })
-    
+  useFrame(() => {   
     fanBladesArray.forEach((bladesArray, index) => {
       // Access the animation controls for the current fan blades array
       const controls = fanAnimControls[index];
@@ -402,18 +396,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     });
   });
  
-
-  
-
-
-  // useEffect(() => {
-  //   boundingBoxHelper.current = new THREE.Box3Helper(new THREE.Box3(), 0xffff00);
-  //   boundingBoxHelper.current.geometry.computeBoundingBox();
-  //   boundingBoxHelper.current.box.setFromObject(referee.current);
-  //   scene.add(boundingBoxHelper.current);
-  // }, [scene]);
-  
-  
+ 
   
 
 

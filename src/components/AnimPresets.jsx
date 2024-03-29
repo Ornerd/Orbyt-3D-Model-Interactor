@@ -17,9 +17,9 @@ const AnimPresets = ({handleAnimationPresets,selectedPreset, presetPosition, han
 
   return (
   
-    <div className={presetPosition.active? "block" : "hidden"} style={{position:"absolute", zIndex: 1000, top: presetPosition.y, left: presetPosition.x}}>
+    <div className={presetPosition.active? "block bg-[white] w-[220px] p-2 rounded-[8px] shadow-md" : "hidden"} style={{position:"absolute", zIndex: 1000, top: presetPosition.y, left: presetPosition.x}}>
       <h3>Which among these options best describes this object?</h3>
-      <div>
+      <div className="flex flex-col">
         <label>
             <input
                 type = "radio"
