@@ -40,7 +40,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   
   
   const handleClick = (e) => {  
-    console.log("parentile", e.object)
 
     if (toggleAnimation && !handleBladeSelection) {
       e.stopPropagation();
@@ -49,7 +48,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
       // e.object.material.color.set(5,5,5);
 
       const objectName = e.object.name;
-      console.log(e.object.parent)
 
       function updateIt(newSt) {
         setClickedName(prv=> {
@@ -80,7 +78,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     const handleItemSelection = ()=> {
       if(hasProceeded){
         if (selectedPreset === "fan") {
-          console.log('fan is going to work')
           
           referee.current.traverse((child) => {
             if (child.name === clickedName) {
@@ -177,7 +174,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   if(confirmed) {
     bladeParent.forEach(blade => {
       blade.material = originalMaterial[blade.name]
-      console.log('fired')
     })
     setFanBladesArray(prevFans => [...prevFans, bladeParent])
     setTimeout(()=> {
@@ -191,7 +187,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   if(!toggleAnimation) {
     bladeParent.forEach(blade => {
       blade.material = originalMaterial[blade.name]
-      console.log('fired')
     })
     setTimeout(()=> {
       setBladeParent([])
@@ -208,7 +203,6 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     const existingBladeIndex = fanBladesArray.findIndex(bladesArray => Array.isArray(bladesArray) && bladesArray.some(blade => blade.name === clickedName));
 
     if(selectedPreset === "fan") {
-      console.log(fanBladesArray[fanBladesArray.length-1]) 
       
       fanBladesArray.forEach((bladesArray, index) => {
         

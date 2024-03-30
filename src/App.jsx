@@ -24,6 +24,8 @@ const App = () => {
 
   const refd = useRef()
 
+  const [disabled, setDisabled] =useState(false)
+
   const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
 
@@ -52,7 +54,6 @@ useEffect(()=> {
   const handleSelectionModal = (e)=> {
     if(toggleAnimation ){
       setInfoText("Select an option to help make your animation simpler")
-      console.log("it worked?", e)
 
       if(hasProceeded == false) { // check to ensure that the animation options checkboard doesn't appear again once I click the proceed button
         setPresetPosition({active: true, x: e.clientX + 5, y: e.clientY})
@@ -78,7 +79,6 @@ useEffect(()=> {
       }
       
       updateSubmit(selectedPreset);  
-      console.log(selectedPreset)
       
       setHasProceeded(true)   //state to signal the start of another function that will lead to opening the GUI controls
       if(selectedPreset==="none") { 
@@ -114,18 +114,21 @@ useEffect(()=> {
 
 
   return (
-    <div className='w-full h-screen'>
+    <div className='w-full h-screen p-2'>
       <section className='absolute z-10 w-2/5'>
         <h1 className="text-3xl font-bold underline text-red-500">
-          Animations with Three JS
+          Custom modifications with Three JS
         </h1>
-        <Toggler modeFunction={animationHandler}/>
+        <Toggler modeFunction={animationHandler} buttonName='Animate'/>
+        <Toggler modeFunction={()=>{console.log('coming soon')}} disabled={()=>{setDisabled(true)}} buttonName='Populate'/>
+        <Toggler modeFunction={()=>{console.log('coming soon')}} disabled={()=>{setDisabled(true)}} buttonName='mini-Map'/>
         <InfoModal 
           infoText={infoText}
           openFunction={confirmSelectionFunction}
           toggleAnimation={toggleAnimation}
           hasProceeded={hasProceeded}
         />
+        
           
       
         <AnimPresets 
@@ -135,7 +138,7 @@ useEffect(()=> {
           handleProceedButton={handleProceedButton}
         />
       </section>
-      <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10' : 'hidden'}></section>
+      <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
       
 
       <Canvas camera={{position:[-1, 10, 10]}}>
