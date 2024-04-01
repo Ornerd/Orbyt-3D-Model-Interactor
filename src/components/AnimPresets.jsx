@@ -11,9 +11,6 @@ const AnimPresets = ({handleAnimationPresets,selectedPreset, presetPosition, han
     handleProceedButton()
   }
 
-  useEffect(()=>{
-    console.log("boolean is", presetPosition)
-  }, [presetPosition])
 
   return (
   

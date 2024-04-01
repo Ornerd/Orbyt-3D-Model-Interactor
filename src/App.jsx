@@ -1,11 +1,14 @@
 import { OrbitControls, Plane } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import React, { useEffect, useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
 import Sample from './Sample'
 import { DoubleSide } from 'three'
 import Toggler from './components/Toggler'
 import InfoModal from './components/InfoModal'
 import AnimPresets from './components/AnimPresets'
+import ReadMeModal from './components/ReadMeModal'
+import { int } from 'three/examples/jsm/nodes/shadernode/ShaderNode'
+import Loader from './components/Loader'
 
 
 
@@ -24,7 +27,8 @@ const App = () => {
 
   const refd = useRef()
 
-  const [disabled, setDisabled] =useState(false)
+  const [disabled, setDisabled] =useState(false);
+  const [readMe, setReadMe] =useState([]);
 
   const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
@@ -33,18 +37,18 @@ const App = () => {
     setInfoText("Click on any object to animate it")
   }
 
-useEffect(()=> {
+  useEffect(()=> {
 
-   if(hasProceeded == true) {  //check to ensure that on toggling in to animation mode after toggling out, options checkboard can still be accessed.
-      setHasProceeded(false) 
+    if(hasProceeded == true) {  //check to ensure that on toggling in to animation mode after toggling out, options checkboard can still be accessed.
+        setHasProceeded(false) 
+      }
+
+    if (toggleAnimation === false) { //to ensure that all stuff related to animation is shut-off when the mode is deselected
+      setInfoText("")
+      setPresetPosition((...prev)=> ({...prev, active:false}))
+      setConfirmed(false)
     }
-
-  if (toggleAnimation === false) { //to ensure that all stuff related to animation is shut-off when the mode is deselected
-    setInfoText("")
-    setPresetPosition((...prev)=> ({...prev, active:false}))
-    setConfirmed(false)
-  }
-},[toggleAnimation])
+  },[toggleAnimation])
   
 
   const handleAnimationPresetOptions = (option) => {
@@ -52,7 +56,7 @@ useEffect(()=> {
   }
 
   const handleSelectionModal = (e)=> {
-    if(toggleAnimation ){
+    if(toggleAnimation){
       setInfoText("Select an option to help make your animation simpler")
 
       if(hasProceeded == false) { // check to ensure that the animation options checkboard doesn't appear again once I click the proceed button
@@ -92,7 +96,7 @@ useEffect(()=> {
 
   const updateInfoText = () => {
     if (selectedPreset === "fan") {
-      setInfoText("Ensure all the fan blades are selected. Click to select/deselect any object. Objects highlighted in blue are the selected objects. Click the Confirm selection button when you're certain all the fan blades are selected")
+      setInfoText("Ensure all the fan blades are selected.Ensure to deselect any object that is not a fan blade. <br> Click to select/deselect any object. Objects highlighted in blue are the selected objects. Click the Confirm selection button when you're certain all the fan blades are selected")
     }
   }
 
@@ -105,12 +109,71 @@ useEffect(()=> {
     }, 200)
   }
 
-  useEffect(()=> {
+  useEffect(()=> {  // to be modified. Currently unsatisfied with the output. It's mainly to provide the user with tips on how to operate his presets, whether they be fans, conveyor belts or the like.
     if (confirmed) {
       setHasProceeded(false);
     }
-  }, [confirmed])
+    if (submittedPreset==="fan") {
 
+      let continueExecution = true;
+
+      setTimeout(() => {
+        if(toggleAnimation === true){
+          setReadMe("If you have multiple fans in your model, you can select them all together and control them all at the same speed. If you want them rotating at different speeds. Go over this process again to enable you create a new GUI control for each fan.");
+        }else{
+          setReadMe("")
+        }
+      }, 2000)
+      
+      setTimeout(() => {
+        if(toggleAnimation === true){
+          setReadMe("Upon confirming selection, the GUI controls for your fan blades will appear at the top right. Use them to set the rotation speeds for each of the axes until you find the axis at which your fan blades rotate correctly.");
+        }else{
+          setReadMe("")
+        }
+      }, 12000);
+      setTimeout(() => {
+        if(toggleAnimation === true){
+          setReadMe("fan blades only rotate in one direction. Therefore you can't operate more than ONE GUI control at a time. If you want to try rotating in another axis, set the active GUI contol back to zero.");
+        }else{
+          setReadMe("")
+        }
+      }, 22000);  
+
+      const intervalId = setInterval(() => {
+
+        if(toggleAnimation === true){
+          setReadMe("If you have multiple fans in your model, you can select them all together and control them all at the same speed. If you want them rotating at different speeds. Go over this process again to enable you create a new GUI control for each fan.");
+        }else{
+          setReadMe("")
+        }
+        setTimeout(() => {
+          if(toggleAnimation === true){
+            setReadMe("Upon confirming selection, the GUI controls for your fan blades will appear at the top right. Use them to set the rotation speeds for each of the axes until you find the axis at which your fan blades rotate correctly.");
+          }else{
+            setReadMe("")
+          }
+        }, 10000);
+        setTimeout(() => {
+          if(toggleAnimation === true){
+            setReadMe("fan blades only rotate in one direction. Therefore you can't operate more than ONE GUI control at a time. If you want to try rotating in another axis, set the active GUI contol back to zero.");
+          }else{
+            setReadMe("")
+          }
+        }, 20000);  
+      }, 30000);
+
+      if(toggleAnimation === false) {
+        clearInterval(intervalId);
+        console.log("Cleaning up interval...");
+      }
+      return () => {
+        clearInterval(intervalId)
+      }
+    }
+  }, [confirmed, submittedPreset, toggleAnimation])
+
+  
 
 
   return (
@@ -142,32 +205,37 @@ useEffect(()=> {
       
 
       <Canvas camera={{position:[-1, 10, 10]}}>
+      <Suspense fallback={<Loader/>}>
         <ambientLight intensity={0.4} />
-        <directionalLight color="#ffffff" position={[0, 5, 5]} />
-        <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
-          <boxGeometry />
-          <meshPhongMaterial />
-        </mesh>
-        <mesh rotation={[Math.PI/2, 0, 0]}>
-          <planeGeometry args={[10,10]}/>
-          <meshStandardMaterial color = "pink" side = {DoubleSide}/>
-        </mesh>
+          <directionalLight color="#ffffff" position={[0, 5, 5]} />
+          <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
+            <boxGeometry />
+            <meshPhongMaterial />
+          </mesh>
+          <mesh rotation={[Math.PI/2, 0, 0]}>
+            <planeGeometry args={[10,10]}/>
+            <meshStandardMaterial color = "pink" side = {DoubleSide}/>
+          </mesh>
 
-        <Sample
-         toggleAnimation = {toggleAnimation}
-         selectedPreset = {selectedPreset}
-         submittedPreset = {submittedPreset}
-         handlePresetChange={handlePresetChange}
-         handleSelectionModal={handleSelectionModal}
-         hasProceeded={hasProceeded}
-         updateInfoText={updateInfoText}
-         confirmed={confirmed}
-         refd={refd}
-        /> 
+          <Sample
+          toggleAnimation = {toggleAnimation}
+          selectedPreset = {selectedPreset}
+          submittedPreset = {submittedPreset}
+          handlePresetChange={handlePresetChange}
+          handleSelectionModal={handleSelectionModal}
+          hasProceeded={hasProceeded}
+          updateInfoText={updateInfoText}
+          confirmed={confirmed}
+          refd={refd}
+          /> 
 
-        <axesHelper scale={3}/>
-        <OrbitControls target={[0, 1, 0]}/>
+          <axesHelper scale={3}/>
+          <OrbitControls target={[0, 1, 0]}/>
+      </Suspense>
+      
       </Canvas>
+
+      <ReadMeModal readMe= {readMe}/>
 
     </div>
   )
