@@ -180,7 +180,7 @@ const App = () => {
     <div className='w-full h-screen p-2'>
       <section className='absolute z-10 w-2/5'>
         <h1 className="text-3xl font-bold underline text-red-500">
-          Custom modifications with Three JS
+         Orbyt-3D
         </h1>
         <Toggler modeFunction={animationHandler} buttonName='Animate'/>
         <Toggler modeFunction={()=>{console.log('coming soon')}} disabled={()=>{setDisabled(true)}} buttonName='Populate'/>

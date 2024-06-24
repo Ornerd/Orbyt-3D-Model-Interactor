@@ -424,8 +424,8 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
 
 
-    const loadedThreeD = useGLTF(window.location.origin +'/Threefiber---Copy/untitled.glb')
-    const loadedThreeD2 = useGLTF(window.location.origin +'/Threefiber---Copy/fox.glb')
+    const loadedThreeD = useGLTF(window.location.origin +'/Orbyt-3D-Model-Interactor/untitled.glb')
+    const loadedThreeD2 = useGLTF(window.location.origin +'/Orbyt-3D-Model-Interactor/fox.glb')
   return (
     <>
     <primitive ref={referee} object={loadedThreeD.scene} scale={3.5}  position={[1, 0, 1]} rotation={[0, -Math.PI/3, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
