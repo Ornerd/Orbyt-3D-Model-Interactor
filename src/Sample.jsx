@@ -9,7 +9,7 @@ import { Pane } from 'tweakpane';
 
 
 
-const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd}) => {
+const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd, selectedModel}) => {
   const {gl, camera, size, scene}= useThree();
   const rayCaster= new THREE.Raycaster();
   const referee =useRef()
@@ -424,12 +424,12 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
 
 
-    const loadedThreeD = useGLTF('/untitled.glb')
+    const loadedThreeD = useGLTF(`/${selectedModel}`)
     const loadedThreeD2 = useGLTF('/fox.glb')
   return (
     <>
-    <primitive ref={referee} object={loadedThreeD.scene} scale={3.5}  position={[1, 0, 1]} rotation={[0, -Math.PI/3, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
-    <primitive object={loadedThreeD2.scene} scale={0.5} position={[-2, 1.6, 1]} onPointerEnter={(e) => console.log( e.object)}/>
+    <primitive ref={referee} object={loadedThreeD.scene} scale={0.05}  position={[0, 0, 0]} rotation={[0, -Math.PI/3, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
+    {/* <primitive object={loadedThreeD2.scene} scale={0.5} position={[-2, 1.6, 1]} onPointerEnter={(e) => console.log( e.object)}/> */}
     </>
   )
 }

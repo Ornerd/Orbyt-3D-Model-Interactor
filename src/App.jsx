@@ -9,12 +9,14 @@ import AnimPresets from './components/AnimPresets'
 import ReadMeModal from './components/ReadMeModal'
 import { int } from 'three/examples/jsm/nodes/shadernode/ShaderNode'
 import Loader from './components/Loader'
-
-
+import { useParams } from 'react-router-dom'
 
 
 const App = () => {
+  const params = useParams()
 
+  const selectedModel = params.linkId;
+ 
   const [toggleAnimation, setToggleAnimation] = useState(false)
   const [infoText, setInfoText] =  useState([])
 
@@ -29,6 +31,7 @@ const App = () => {
 
   const [disabled, setDisabled] =useState(false);
   const [readMe, setReadMe] =useState([]);
+
 
   const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
@@ -177,7 +180,7 @@ const App = () => {
 
 
   return (
-    <div className='w-full h-screen p-2'>
+    <div className='w-full h-screen p-4'>
       <section className='absolute z-10 w-2/5'>
         <h1 className="text-3xl font-bold underline text-red-500">
          Orbyt-3D
@@ -208,14 +211,14 @@ const App = () => {
       <Suspense fallback={<Loader/>}>
         <ambientLight intensity={0.4} />
           <directionalLight color="#ffffff" position={[0, 5, 5]} />
-          <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
+          {/* <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
             <boxGeometry />
             <meshPhongMaterial />
           </mesh>
           <mesh rotation={[Math.PI/2, 0, 0]}>
             <planeGeometry args={[10,10]}/>
             <meshStandardMaterial color = "pink" side = {DoubleSide}/>
-          </mesh>
+          </mesh> */}
 
           <Sample
           toggleAnimation = {toggleAnimation}
@@ -227,6 +230,7 @@ const App = () => {
           updateInfoText={updateInfoText}
           confirmed={confirmed}
           refd={refd}
+          selectedModel={selectedModel}
           /> 
 
           <axesHelper scale={3}/>
