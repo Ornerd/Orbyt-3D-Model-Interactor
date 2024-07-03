@@ -99,7 +99,7 @@ const App = () => {
 
   const updateInfoText = () => {
     if (selectedPreset === "fan") {
-      setInfoText("Ensure all the fan blades are selected.Ensure to deselect any object that is not a fan blade. <br> Click to select/deselect any object. Objects highlighted in blue are the selected objects. Click the Confirm selection button when you're certain all the fan blades are selected")
+      setInfoText("Ensure all the fan blades are selected.Ensure to deselect any object that is not a fan blade. \n Click to select/deselect any object. Objects highlighted in blue are the selected objects. Click the Confirm selection button when you're certain all the fan blades are selected")
     }
   }
 

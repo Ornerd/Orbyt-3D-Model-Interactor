@@ -428,7 +428,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
     const loadedThreeD2 = useGLTF('/fox.glb')
   return (
     <>
-    <primitive ref={referee} object={loadedThreeD.scene} scale={0.05}  position={[0, 0, 0]} rotation={[0, -Math.PI/3, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
+    <primitive ref={referee} object={loadedThreeD.scene} scale={0.05}  position={[0, 0, 0]} rotation={[0, 0, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
     {/* <primitive object={loadedThreeD2.scene} scale={0.5} position={[-2, 1.6, 1]} onPointerEnter={(e) => console.log( e.object)}/> */}
     </>
   )
