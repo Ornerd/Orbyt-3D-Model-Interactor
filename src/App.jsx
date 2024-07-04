@@ -16,9 +16,13 @@ const App = () => {
   const params = useParams()
 
   const selectedModel = params.linkId;
+
+  const [activeToggler, setActiveToggler] = useState(null)
  
   const [toggleAnimation, setToggleAnimation] = useState(false)
   const [infoText, setInfoText] =  useState([])
+
+  const [toggleResize, setToggleResize] = useState(false)
 
   const [selectedPreset, setSelectedPreset] = useState(null)
   const [presetPosition, setPresetPosition] = useState( {active: false, x: 0, y: 0})
@@ -28,6 +32,7 @@ const App = () => {
   const [confirmed, setConfirmed] = useState(false)
 
   const refd = useRef()
+  const refdResize = useRef()
 
   const [disabled, setDisabled] =useState(false);
   const [readMe, setReadMe] =useState([]);
@@ -35,10 +40,27 @@ const App = () => {
 
   const animationHandler = ()=> {  //handles the animation mode
     setToggleAnimation(prevState => !prevState);
+    if (activeToggler === "Animate") {
+      setActiveToggler(null)
+    }else {
+      setActiveToggler('Animate')
+    }
+    console.log(activeToggler)
 
    
     setInfoText("Click on any object to animate it")
   }
+
+  const resizeHandler = ()=> {
+    setToggleResize(prevState => !prevState);
+    if (activeToggler === "Resize") {
+      setActiveToggler(null)
+    }else {
+      setActiveToggler('Resize')
+    }
+  }
+
+
 
   useEffect(()=> {
 
@@ -185,9 +207,10 @@ const App = () => {
         <h1 className="text-3xl font-bold underline text-red-500">
          Orbyt-3D
         </h1>
-        <Toggler modeFunction={animationHandler} buttonName='Animate'/>
-        <Toggler modeFunction={()=>{console.log('coming soon')}} disabled={()=>{setDisabled(true)}} buttonName='Populate'/>
-        <Toggler modeFunction={()=>{console.log('coming soon')}} disabled={()=>{setDisabled(true)}} buttonName='mini-Map'/>
+        <Toggler onClick={resizeHandler} activeToggler={activeToggler} buttonName='Resize'/>
+        <Toggler onClick={animationHandler} activeToggler={activeToggler} buttonName='Animate'/>
+        <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='Populate'/>
+        <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='mini-Map'/>
         <InfoModal 
           infoText={infoText}
           openFunction={confirmSelectionFunction}
@@ -208,9 +231,10 @@ const App = () => {
         <i className="fa fa-sign-out text-4xl hover:text-red-800" aria-hidden="true"></i>
       </Link>
       <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
+      <section ref={refdResize} className={toggleResize? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
       
 
-      <Canvas camera={{position:[-1, 10, 10]}}>
+      <Canvas camera={{position:[5, 5, 5]}}>
       <Suspense fallback={<Loader/>}>
         <ambientLight intensity={0.4} />
           <directionalLight color="#ffffff" position={[0, 5, 5]} />
@@ -221,9 +245,10 @@ const App = () => {
           <mesh rotation={[Math.PI/2, 0, 0]}>
             <planeGeometry args={[10,10]}/>
             <meshStandardMaterial color = "pink" side = {DoubleSide}/>
-          </mesh> */}
+          </mesh>*/} 
 
           <Sample
+          toggleResize = {toggleResize}
           toggleAnimation = {toggleAnimation}
           selectedPreset = {selectedPreset}
           submittedPreset = {submittedPreset}
@@ -233,6 +258,7 @@ const App = () => {
           updateInfoText={updateInfoText}
           confirmed={confirmed}
           refd={refd}
+          refdResize={refdResize}
           selectedModel={selectedModel}
           /> 
 

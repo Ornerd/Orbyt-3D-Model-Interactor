@@ -9,7 +9,7 @@ import { Pane } from 'tweakpane';
 
 
 
-const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd, selectedModel}) => {
+const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd, refdResize, selectedModel}) => {
   const {gl, camera, size, scene}= useThree();
   const rayCaster= new THREE.Raycaster();
   const referee =useRef()
@@ -40,7 +40,7 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
   
   
   const handleClick = (e) => {  
-
+    e.stopPropagation();
     if (toggleAnimation && !handleBladeSelection) {
       e.stopPropagation();
       const clickedObj = e.object;
@@ -376,12 +376,40 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
 
 
 
+  useEffect(()=> {
+    if(toggleResize) {
+      const pane = new Pane({
+        container: refdResize.current
+      }); 
+      const params = {
+        scale: referee.current.scale.x,
+      };
+
+      const folder = pane.addFolder({ title: `model`, expanded: true });
+      folder.addBinding(params, `scale`, { min: (referee.current.scale.x)/150, max: (referee.current.scale.x)*15, step: 0.01 }).on('change', (e)=> {
+        referee.current.scale.x = e.value
+        referee.current.scale.y = e.value
+        referee.current.scale.z = e.value
+      })
+    }
+  }, [toggleResize])
+
+
+
+
   useEffect(()=> {  //check to ensure only the last selected pane control is visible at any given time.
     if (refd.current.children.length > 1) {
       const lastChildIndex = refd.current.children.length-1
 
       for (let i = 0; i < lastChildIndex; i++) {
         refd.current.removeChild(refd.current.children[0]);
+      }
+    }
+    if (refdResize.current.children.length > 1) {
+      const lastChildIndex = refdResize.current.children.length-1
+
+      for (let i = 0; i < lastChildIndex; i++) {
+        refdResize.current.removeChild(refdResize.current.children[0]);
       }
     }
     
@@ -421,6 +449,8 @@ const Sample = ({toggleAnimation, selectedPreset, handlePresetChange, submittedP
  
  
   
+
+ 
 
 
 
