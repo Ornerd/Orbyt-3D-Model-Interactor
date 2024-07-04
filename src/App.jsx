@@ -9,7 +9,7 @@ import AnimPresets from './components/AnimPresets'
 import ReadMeModal from './components/ReadMeModal'
 import { int } from 'three/examples/jsm/nodes/shadernode/ShaderNode'
 import Loader from './components/Loader'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 
 const App = () => {
@@ -204,6 +204,9 @@ const App = () => {
           handleProceedButton={handleProceedButton}
         />
       </section>
+      <Link to='/' className='absolute right-0 z-10 p-2'>
+        <i className="fa fa-sign-out text-4xl hover:text-red-800" aria-hidden="true"></i>
+      </Link>
       <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
       
 
