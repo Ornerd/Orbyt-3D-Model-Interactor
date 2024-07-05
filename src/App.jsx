@@ -53,10 +53,10 @@ const App = () => {
 
   const resizeHandler = ()=> {
     setToggleResize(prevState => !prevState);
-    if (activeToggler === "Resize") {
+    if (activeToggler === "Adjust") {
       setActiveToggler(null)
     }else {
-      setActiveToggler('Resize')
+      setActiveToggler('Adjust')
     }
   }
 
@@ -207,7 +207,7 @@ const App = () => {
         <h1 className="text-3xl font-bold underline text-red-500">
          Orbyt-3D
         </h1>
-        <Toggler onClick={resizeHandler} activeToggler={activeToggler} buttonName='Resize'/>
+        <Toggler onClick={resizeHandler} activeToggler={activeToggler} buttonName='Adjust'/>
         <Toggler onClick={animationHandler} activeToggler={activeToggler} buttonName='Animate'/>
         <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='Populate'/>
         <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='mini-Map'/>

@@ -383,14 +383,26 @@ const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChan
       }); 
       const params = {
         scale: referee.current.scale.x,
+        x: referee.current.position.x,
+        y: referee.current.position.y,
+        z:  referee.current.position.z
       };
 
       const folder = pane.addFolder({ title: `model`, expanded: true });
+      const folderTwo = pane.addFolder({ title: `position`, expanded: true });
       folder.addBinding(params, `scale`, { min: (referee.current.scale.x)/150, max: (referee.current.scale.x)*15, step: 0.01 }).on('change', (e)=> {
         referee.current.scale.x = e.value
         referee.current.scale.y = e.value
         referee.current.scale.z = e.value
       })
+
+      const axes = ['x', 'y', 'z'];
+
+      axes.forEach((axis) => {
+        folderTwo.addBinding(params, axis, {min: -20, max: 20, step: 0.01}).on('change', (e) => {
+          referee.current.position[axis] = e.value;
+        });
+      });
     }
   }, [toggleResize])
 
