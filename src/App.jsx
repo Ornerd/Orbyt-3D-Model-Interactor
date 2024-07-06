@@ -2,7 +2,6 @@ import { OrbitControls, Plane } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import React, { Suspense, useEffect, useRef, useState } from 'react'
 import Sample from './Sample'
-import { DoubleSide } from 'three'
 import Toggler from './components/Toggler'
 import InfoModal from './components/InfoModal'
 import AnimPresets from './components/AnimPresets'
@@ -24,6 +23,8 @@ const App = () => {
 
   const [toggleResize, setToggleResize] = useState(false)
 
+  const [planeEditor, setPlaneEditor] = useState(false)
+
   const [selectedPreset, setSelectedPreset] = useState(null)
   const [presetPosition, setPresetPosition] = useState( {active: false, x: 0, y: 0})
   const [submittedPreset, setSubmittedPreset] = useState(null)
@@ -33,6 +34,7 @@ const App = () => {
 
   const refd = useRef()
   const refdResize = useRef()
+  const refdPlane = useRef()
 
   const [disabled, setDisabled] =useState(false);
   const [readMe, setReadMe] =useState([]);
@@ -48,7 +50,7 @@ const App = () => {
     console.log(activeToggler)
 
    
-    setInfoText("Click on any object to animate it")
+    setInfoText("Click on any object on your model to animate it")
   }
 
   const resizeHandler = ()=> {
@@ -57,6 +59,15 @@ const App = () => {
       setActiveToggler(null)
     }else {
       setActiveToggler('Adjust')
+    }
+  }
+
+  const planeToggler = ()=> {
+    setPlaneEditor(prevState => !prevState);
+    if (activeToggler === "Plane") {
+      setActiveToggler(null)
+    }else {
+      setActiveToggler('Plane')
     }
   }
 
@@ -208,6 +219,7 @@ const App = () => {
          Orbyt-3D
         </h1>
         <Toggler onClick={resizeHandler} activeToggler={activeToggler} buttonName='Adjust'/>
+        <Toggler onClick={planeToggler} activeToggler={activeToggler} buttonName='Plane'/>
         <Toggler onClick={animationHandler} activeToggler={activeToggler} buttonName='Animate'/>
         <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='Populate'/>
         <Toggler onClick={()=>{console.log('coming soon')}} activeToggler={activeToggler} buttonName='mini-Map'/>
@@ -232,6 +244,7 @@ const App = () => {
       </Link>
       <section ref={refd} className={toggleAnimation? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
       <section ref={refdResize} className={toggleResize? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
+      <section ref={refdPlane} className={planeEditor? 'absolute right-0 z-10 p-2' : 'hidden'}></section>
       
 
       <Canvas camera={{position:[5, 5, 5]}}>
@@ -241,14 +254,11 @@ const App = () => {
           {/* <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
             <boxGeometry />
             <meshPhongMaterial />
-          </mesh>
-          <mesh rotation={[Math.PI/2, 0, 0]}>
-            <planeGeometry args={[10,10]}/>
-            <meshStandardMaterial color = "pink" side = {DoubleSide}/>
           </mesh>*/} 
 
           <Sample
           toggleResize = {toggleResize}
+          planeEditor = {planeEditor}
           toggleAnimation = {toggleAnimation}
           selectedPreset = {selectedPreset}
           submittedPreset = {submittedPreset}
@@ -259,6 +269,7 @@ const App = () => {
           confirmed={confirmed}
           refd={refd}
           refdResize={refdResize}
+          refdPlane={refdPlane}
           selectedModel={selectedModel}
           /> 
 

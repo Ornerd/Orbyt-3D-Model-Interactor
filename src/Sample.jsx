@@ -5,11 +5,13 @@ import { useControls } from 'leva';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { useGLTF } from '@react-three/drei'
 import { Pane } from 'tweakpane';
+import { DoubleSide } from 'three';
+import { color } from 'three/examples/jsm/nodes/Nodes.js';
 
 
 
 
-const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd, refdResize, selectedModel}) => {
+const Sample = ({toggleResize, toggleAnimation, planeEditor, selectedPreset, handlePresetChange, submittedPreset, handleSelectionModal, hasProceeded, updateInfoText, confirmed, refd, refdResize, refdPlane,selectedModel}) => {
   const {gl, camera, size, scene}= useThree();
   const rayCaster= new THREE.Raycaster();
   const referee =useRef()
@@ -406,6 +408,34 @@ const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChan
     }
   }, [toggleResize])
 
+  useEffect(()=> {
+    if(planeEditor) {
+      const pane = new Pane({
+        container: refdPlane.current
+      });
+      const params = {
+        visible: true,
+        scale: 0,
+        orient: '[Math.PI/2, 0, 0]',
+        position: {x: 0, y: 0, z: 0},
+        color: '#000000',
+      };
+
+      const folderOne = pane.addFolder({ title: `plane`, expanded: true });
+      folderOne.addBinding(params, 'visible')
+      folderOne.addBinding(params, 'scale', {min:0, max:20})
+
+      const folderTwo = pane.addFolder({title: 'position and orientation', expanded: true})
+      folderTwo.addBinding(params, 'orient', {options: {
+        X: '[Math.PI/2, 0, 0]', 
+        Y: '[0, Math.PI/2, 0]', 
+        Z: '[0, 0, Math.PI/2]'
+      }
+      })
+
+    }
+  }, [planeEditor])
+
 
 
 
@@ -422,6 +452,13 @@ const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChan
 
       for (let i = 0; i < lastChildIndex; i++) {
         refdResize.current.removeChild(refdResize.current.children[0]);
+      }
+    }
+    if (refdPlane.current.children.length > 1) {
+      const lastChildIndex = refdPlane.current.children.length-1
+
+      for (let i = 0; i < lastChildIndex; i++) {
+        refdPlane.current.removeChild(refdPlane.current.children[0]);
       }
     }
     
@@ -472,6 +509,10 @@ const Sample = ({toggleResize, toggleAnimation, selectedPreset, handlePresetChan
     <>
     <primitive ref={referee} object={loadedThreeD.scene} position={[0, 0, 0]} rotation={[0, 0, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
     {/* <primitive object={loadedThreeD2.scene} scale={0.5} position={[-2, 1.6, 1]} onPointerEnter={(e) => console.log( e.object)}/> */}
+    <mesh rotation={[Math.PI/2, 0, 0]}>
+            <planeGeometry args={[10,10.10]}/>
+            <meshStandardMaterial color = "pink" side = {DoubleSide}/>
+          </mesh>
     </>
   )
 }
