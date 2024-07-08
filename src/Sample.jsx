@@ -38,6 +38,11 @@ const Sample = ({toggleResize, toggleAnimation, planeEditor, selectedPreset, han
   const [bladeParent, setBladeParent] = useState([]) //to store all the fan blades for rotation
   const [fanBladesArray, setFanBladesArray] = useState([])
 
+  const [planeIsVisible, setPlaneVisibility] = useState(false)
+  const [planeColor, setPlaneColor] = useState('#ffffff')
+  const [planeRotation, setPlaneRotation] = useState([Math.PI/2, 0, 0])
+  const planeRef = useRef()
+
  
   
   
@@ -392,10 +397,8 @@ const Sample = ({toggleResize, toggleAnimation, planeEditor, selectedPreset, han
 
       const folder = pane.addFolder({ title: `model`, expanded: true });
       const folderTwo = pane.addFolder({ title: `position`, expanded: true });
-      folder.addBinding(params, `scale`, { min: (referee.current.scale.x)/150, max: (referee.current.scale.x)*15, step: 0.01 }).on('change', (e)=> {
-        referee.current.scale.x = e.value
-        referee.current.scale.y = e.value
-        referee.current.scale.z = e.value
+      folder.addBinding(params, `scale`, { min: (referee.current.scale.x)/150, max: (referee.current.scale.x)*15 }).on('change', (e)=> {
+        referee.current.scale.set(e.value, e.value, e.value)
       })
 
       const axes = ['x', 'y', 'z'];
@@ -414,24 +417,55 @@ const Sample = ({toggleResize, toggleAnimation, planeEditor, selectedPreset, han
         container: refdPlane.current
       });
       const params = {
-        visible: true,
+        visible: false,
         scale: 0,
-        orient: '[Math.PI/2, 0, 0]',
-        position: {x: 0, y: 0, z: 0},
-        color: '#000000',
+        orient: 'x',
+        x: 0, 
+        y: 0,
+        z: 0,
+        color: '#ffffff',
       };
 
       const folderOne = pane.addFolder({ title: `plane`, expanded: true });
-      folderOne.addBinding(params, 'visible')
-      folderOne.addBinding(params, 'scale', {min:0, max:20})
-
-      const folderTwo = pane.addFolder({title: 'position and orientation', expanded: true})
-      folderTwo.addBinding(params, 'orient', {options: {
-        X: '[Math.PI/2, 0, 0]', 
-        Y: '[0, Math.PI/2, 0]', 
-        Z: '[0, 0, Math.PI/2]'
-      }
+      folderOne.addBinding(params, 'visible').on('change', (e)=> {
+        setPlaneVisibility(e.value)
       })
+      folderOne.addBinding(params, 'color').on('change', (e)=> {
+        setPlaneColor(e.value)
+      })
+      folderOne.addBinding(params, 'scale', {min:0, max:20}).on('change', (e)=> {
+        planeRef.current.scale.set(e.value, e.value, e.value)
+        console.log(planeRef.current.rotation)
+      })
+
+      const folderTwo = pane.addFolder({title: 'orientation', expanded: true})
+      folderTwo.addBinding(params, 'orient', {options: {
+        X: 'x', 
+        Y: 'y', 
+        Z: 'z'
+      }
+      }).on('change', (e)=> {
+        e.value=== 'x'?
+        setPlaneRotation([Math.PI/2, 0, 0])
+        :
+        e.value === 'y'?
+        setPlaneRotation([0, Math.PI/2, 0])
+        :
+        e.value === 'z'?
+        setPlaneRotation([0, 0, Math.PI/2])
+        :
+        console.log(planeRef.current.rotation)
+      })
+      
+      const folderThree = pane.addFolder({title: 'position', expanded: true})
+
+      const axes = ['x', 'y', 'z'];
+      axes.forEach((axis) => {
+        folderThree.addBinding(params, axis, {min: -20, max: 20, step: 0.01}).on('change', (e) => {
+          planeRef.current.position[axis] = e.value;
+        });
+      });
+     
 
     }
   }, [planeEditor])
@@ -509,11 +543,18 @@ const Sample = ({toggleResize, toggleAnimation, planeEditor, selectedPreset, han
     <>
     <primitive ref={referee} object={loadedThreeD.scene} position={[0, 0, 0]} rotation={[0, 0, 0]} onPointerDown={(e)=>{handleClick(e), handleSecondClick(e)}}/>
     {/* <primitive object={loadedThreeD2.scene} scale={0.5} position={[-2, 1.6, 1]} onPointerEnter={(e) => console.log( e.object)}/> */}
-    <mesh rotation={[Math.PI/2, 0, 0]}>
-            <planeGeometry args={[10,10.10]}/>
-            <meshStandardMaterial color = "pink" side = {DoubleSide}/>
-          </mesh>
+    {
+      planeIsVisible?
+      <mesh rotation={planeRotation} ref={planeRef} receiveShadow={true}>
+              <planeGeometry args={[10,10]}/>
+              <meshStandardMaterial color = {planeColor} side = {DoubleSide}/>
+            </mesh>
+
+      :
+      null
+      }
     </>
+    
   )
 }
 
