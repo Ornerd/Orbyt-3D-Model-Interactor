@@ -250,7 +250,7 @@ const App = () => {
       <Canvas camera={{position:[5, 5, 5]}}>
       <Suspense fallback={<Loader/>}>
         <ambientLight intensity={0.8} />
-        <directionalLight color="#ffffff" position={[0, 1, 5]} />
+        <directionalLight color="#ffffff" position={[2, 2, 5]} />
         <pointLight color='#ffffff' intensity={4.8} position={[0, 1, 0]}/>
           {/* <mesh rotation={[0, -5, 0]} position={[0, 0.5, 0]}>
             <boxGeometry />
@@ -274,7 +274,7 @@ const App = () => {
           selectedModel={selectedModel}
           /> 
 
-          <axesHelper scale={3}/>
+          {/* <axesHelper scale={3}/> */}
           <OrbitControls target={[0, 1, 0]}/>
       </Suspense>
       

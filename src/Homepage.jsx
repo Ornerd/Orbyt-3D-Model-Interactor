@@ -16,7 +16,7 @@ const Homepage = () => {
                 <h4>Sample models:</h4>
                 <div>
                     <Link to='App/windmill_low-poly.glb'><Button buttonText={'Windmill'} buttonStyle={'mr-4'}/></Link>
-                    <Link to='App/untitled.glb'><Button buttonText={'Metallic Windmill'}/></Link>
+                    <Link to='App/UntitledAirplane.glb'><Button buttonText={'Metallic Airplane'}/></Link>
                 </div>
                 
             </div>
